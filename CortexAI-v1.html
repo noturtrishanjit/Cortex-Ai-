@@ -1,0 +1,2029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CortexAI</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ─── DESIGN TOKENS ─────────────────────────────── */
+:root {
+  --bg:    #f7f6f3;
+  --bg2:   #eeecea;
+  --bg3:   #e5e3df;
+  --surf:  #ffffff;
+  --b1:    rgba(0,0,0,0.07);
+  --b2:    rgba(0,0,0,0.13);
+  --t1:    #18170f;
+  --t2:    #706e68;
+  --t3:    #a8a49e;
+  --red:   #b91c1c;
+  --green: #166534;
+  --amber: #92400e;
+  --navh:  58px;
+  --r:     12px;
+  --rs:    8px;
+}
+[data-dark] {
+  --bg:    #0f0f0e;
+  --bg2:   #181816;
+  --bg3:   #222220;
+  --surf:  #181816;
+  --b1:    rgba(255,255,255,0.06);
+  --b2:    rgba(255,255,255,0.11);
+  --t1:    #edeae4;
+  --t2:    #736f69;
+  --t3:    #484440;
+  --red:   #f87171;
+  --green: #4ade80;
+  --amber: #fbbf24;
+}
+
+/* ─── RESET ─────────────────────────────────────── */
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+html { height:100%; }
+body {
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg); color:var(--t1);
+  min-height:100%; font-size:14px; line-height:1.5;
+  max-width:430px; margin:0 auto;
+  transition:background .2s,color .2s;
+  overflow-x:hidden;
+}
+button { font-family:inherit; cursor:pointer; background:none; border:none; color:inherit; -webkit-tap-highlight-color:transparent; }
+input,textarea,select {
+  font-family:inherit; font-size:14px;
+  color:var(--t1); background:var(--bg2);
+  border:1px solid var(--b2); outline:none;
+  border-radius:var(--rs); padding:11px 13px;
+  width:100%; transition:border-color .2s;
+  -webkit-appearance:none; appearance:none;
+}
+input:focus,textarea:focus,select:focus { border-color:var(--t2); }
+textarea { resize:none; line-height:1.6; }
+select option { background:var(--bg2); }
+::-webkit-scrollbar { display:none; }
+pre { white-space:pre-wrap; font-family:inherit; }
+
+/* ─── SCREEN SYSTEM ─────────────────────────────── */
+.scr { display:none; flex-direction:column; min-height:100vh; padding-bottom:calc(var(--navh)+10px); }
+.scr.on { display:flex; animation:up .2s ease; }
+@keyframes up { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+/* ─── TOPBAR ─────────────────────────────────────── */
+.bar {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 18px 12px;
+  position:sticky; top:0; z-index:30;
+  background:var(--bg); border-bottom:1px solid var(--b1);
+}
+.bar-brand { display:flex; flex-direction:column; }
+.bar-name { font-family:'Instrument Serif',serif; font-size:18px; font-weight:400; line-height:1; }
+.bar-sub { font-size:9px; color:var(--t3); letter-spacing:1.5px; margin-top:2px; }
+.bar-r { display:flex; align-items:center; gap:9px; }
+.ava {
+  width:30px; height:30px; border-radius:50%;
+  background:var(--t1); color:var(--bg);
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:600;
+}
+.tbtn {
+  width:32px; height:32px; border-radius:50%;
+  border:1px solid var(--b2);
+  display:flex; align-items:center; justify-content:center;
+  font-size:15px; background:var(--surf); transition:all .15s;
+}
+.tbtn:active { transform:scale(.9); }
+
+/* ─── PAGE PAD ───────────────────────────────────── */
+.pad { padding:18px 18px 0; flex:1; display:flex; flex-direction:column; gap:18px; }
+
+/* ─── LABELS ─────────────────────────────────────── */
+.slabel { font-size:10px; color:var(--t3); letter-spacing:1.2px; text-transform:uppercase; margin-bottom:9px; }
+
+/* ─── CARDS ──────────────────────────────────────── */
+.card { background:var(--surf); border:1px solid var(--b1); border-radius:var(--r); padding:16px; }
+.chead { display:flex; align-items:center; justify-content:space-between; margin-bottom:13px; }
+.ctitle { font-family:'Instrument Serif',serif; font-size:15px; font-weight:400; }
+
+/* ─── WELCOME ────────────────────────────────────── */
+.welcome { background:var(--t1); color:var(--bg); border-radius:var(--r); padding:20px; }
+.wname { font-family:'Instrument Serif',serif; font-size:22px; margin-bottom:4px; }
+.wsub { font-size:11px; opacity:.5; letter-spacing:.3px; }
+
+/* ─── KPI GRID ───────────────────────────────────── */
+.kgrid { display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+.kcard { background:var(--surf); border:1px solid var(--b1); border-radius:var(--r); padding:14px; }
+.kn { font-family:'Instrument Serif',serif; font-size:28px; line-height:1; margin-bottom:3px; }
+.kl { font-size:10px; color:var(--t3); letter-spacing:.5px; }
+
+/* ─── QUICK ACTIONS ──────────────────────────────── */
+.qgrid { display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+.qtile {
+  background:var(--surf); border:1px solid var(--b1);
+  border-radius:var(--r); padding:14px;
+  display:flex; flex-direction:column; gap:4px;
+  text-align:left; transition:background .15s;
+}
+.qtile:active { background:var(--bg2); }
+.qi { font-size:20px; margin-bottom:2px; }
+.ql { font-size:13px; font-weight:500; }
+.qs { font-size:10px; color:var(--t3); }
+
+/* ─── TASK ITEMS ─────────────────────────────────── */
+.titem {
+  display:flex; align-items:flex-start; gap:11px;
+  padding:10px 0; border-bottom:1px solid var(--b1);
+}
+.titem:last-child { border-bottom:none; }
+.tchk {
+  width:17px; height:17px; border-radius:50%;
+  border:1.5px solid var(--b2); flex-shrink:0;
+  margin-top:2px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:all .15s; background:none;
+}
+.tchk.dn { background:var(--t1); border-color:var(--t1); }
+.tchk.dn::after { content:''; width:5px; height:5px; background:var(--bg); border-radius:50%; }
+.tbody { flex:1; }
+.ttxt { font-size:13px; line-height:1.4; }
+.ttxt.dn { color:var(--t3); text-decoration:line-through; }
+.tmeta { font-size:10px; color:var(--t3); margin-top:2px; }
+.pdot { width:6px; height:6px; border-radius:50%; flex-shrink:0; margin-top:5px; }
+
+/* ─── PILLS ──────────────────────────────────────── */
+.pills { display:flex; gap:6px; flex-wrap:wrap; }
+.pill {
+  padding:5px 12px; border-radius:20px;
+  border:1px solid var(--b2); font-size:11px;
+  color:var(--t2); background:none;
+  cursor:pointer; white-space:nowrap; transition:all .15s;
+}
+.pill.on { background:var(--t1); color:var(--bg); border-color:var(--t1); }
+.pill:active { opacity:.7; }
+
+/* ─── GOALS ──────────────────────────────────────── */
+.gitem { display:flex; align-items:center; gap:10px; padding:11px 0; border-bottom:1px solid var(--b1); }
+.gitem:last-child { border-bottom:none; }
+.gchk {
+  width:18px; height:18px; border-radius:4px;
+  border:2px solid var(--b2); flex-shrink:0;
+  cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  font-size:10px; color:var(--bg); transition:all .15s; background:none;
+}
+.gchk.dn { background:var(--t1); border-color:var(--t1); }
+.gcat-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.gtxt { flex:1; font-size:13px; color:var(--t1); line-height:1.4; }
+.gtxt.dn { color:var(--t3); text-decoration:line-through; }
+.gdel { font-size:17px; color:var(--t3); padding:0 3px; line-height:1; transition:color .15s; }
+.gdel:active { color:var(--red); }
+.goal-cats { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+.goal-cat-btn {
+  padding:4px 11px; border-radius:20px; font-size:11px;
+  border:1px solid var(--b2); color:var(--t2); background:none;
+  cursor:pointer; transition:all .15s;
+}
+.goal-cat-btn.on { background:var(--t1); color:var(--bg); border-color:var(--t1); }
+.goal-add-row { display:flex; gap:8px; margin-top:14px; }
+.goal-cat-sel { flex-shrink:0; width:auto; padding:9px 10px; font-size:12px; }
+
+/* ─── CHAT ───────────────────────────────────────── */
+.chatbox {
+  flex:1; overflow-y:auto;
+  padding:16px 18px 10px;
+  display:flex; flex-direction:column; gap:13px;
+}
+.cempty {
+  flex:1; display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  gap:10px; padding:40px 20px;
+  color:var(--t3); text-align:center;
+}
+.ceico { font-family:'Instrument Serif',serif; font-size:40px; opacity:.25; }
+.cetxt { font-size:13px; }
+.cesuggest { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin-top:6px; }
+.csg {
+  font-size:11px; color:var(--t2);
+  padding:5px 10px; border:1px solid var(--b2);
+  border-radius:20px; cursor:pointer; transition:all .15s;
+}
+.csg:active { background:var(--bg2); }
+.mwrap { display:flex; flex-direction:column; }
+.mwrap.user { align-items:flex-end; }
+.mwrap.bot { align-items:flex-start; }
+.mwho { font-size:10px; color:var(--t3); margin-bottom:3px; letter-spacing:.3px; }
+.bbl { font-size:13px; line-height:1.65; padding:11px 13px; border-radius:14px; max-width:83%; }
+.bbl.user { background:var(--t1); color:var(--bg); border-radius:14px 14px 3px 14px; }
+.bbl.bot { background:var(--surf); border:1px solid var(--b1); border-radius:14px 14px 14px 3px; }
+.chatbar {
+  padding:10px 14px; border-top:1px solid var(--b1);
+  display:flex; gap:8px; align-items:flex-end;
+  background:var(--bg); position:sticky; bottom:var(--navh);
+}
+.chatin {
+  flex:1; padding:9px 12px; border-radius:20px;
+  border:1px solid var(--b2); font-size:13px;
+  line-height:1.5; background:var(--surf);
+  max-height:90px; color:var(--t1);
+}
+.chatin:focus { border-color:var(--t2); }
+.sendbtn {
+  width:36px; height:36px; border-radius:50%;
+  background:var(--t1); color:var(--bg);
+  display:flex; align-items:center; justify-content:center;
+  font-size:15px; flex-shrink:0; transition:opacity .15s;
+}
+.sendbtn:disabled { opacity:.3; }
+.subjstrip {
+  padding:10px 18px 8px; border-bottom:1px solid var(--b1);
+  overflow-x:auto; display:flex; gap:6px; scrollbar-width:none;
+}
+.subjstrip::-webkit-scrollbar { display:none; }
+
+/* ─── PRACTICE ───────────────────────────────────── */
+.qcard { background:var(--surf); border:1px solid var(--b1); border-radius:var(--r); padding:16px; margin-bottom:10px; }
+.qnum { font-size:10px; color:var(--t3); letter-spacing:.8px; margin-bottom:7px; }
+.qtxt { font-family:'Instrument Serif',serif; font-size:16px; font-weight:400; line-height:1.5; margin-bottom:13px; }
+.opt {
+  display:flex; align-items:flex-start; gap:9px;
+  width:100%; padding:10px 12px;
+  border-radius:var(--rs); border:1px solid var(--b2);
+  background:none; text-align:left;
+  font-size:13px; margin-bottom:6px;
+  transition:all .15s; cursor:pointer;
+  color:var(--t1); font-family:inherit;
+}
+.opt:active { background:var(--bg2); }
+.opt.sel { border-color:var(--t1); background:rgba(0,0,0,.04); }
+[data-dark] .opt.sel { background:rgba(255,255,255,.06); }
+.opt.cor { border-color:var(--green); color:var(--green); }
+.opt.wrg { border-color:var(--red); color:var(--red); }
+.olbl { font-size:10px; color:var(--t3); width:15px; flex-shrink:0; padding-top:1px; font-weight:600; }
+.opt.sel .olbl { color:var(--t1); }
+.opt.cor .olbl { color:var(--green); }
+.opt.wrg .olbl { color:var(--red); }
+.expl {
+  margin-top:10px; padding:11px 13px;
+  border-radius:var(--rs); background:var(--bg2);
+  font-size:12px; color:var(--t2); line-height:1.65;
+  border-left:2px solid var(--t3);
+}
+.scorecard {
+  border-radius:var(--r); padding:26px 18px;
+  text-align:center; margin-bottom:12px;
+}
+.scorecard.pass { background:rgba(22,101,52,.07); border:1px solid rgba(22,101,52,.2); }
+.scorecard.fail { background:rgba(185,28,28,.06); border:1px solid rgba(185,28,28,.15); }
+.scoren { font-family:'Instrument Serif',serif; font-size:50px; font-weight:400; line-height:1; }
+.scorel { font-size:12px; color:var(--t3); margin-top:5px; }
+.scorem { font-size:14px; margin-top:8px; }
+.exam-banner {
+  display:none; align-items:center; gap:10px;
+  padding:11px 16px; margin-bottom:10px;
+  border-radius:var(--rs);
+  background:rgba(185,28,28,.07); border:1px solid rgba(185,28,28,.2);
+}
+.exam-banner.show { display:flex; }
+.etimer { font-family:'Instrument Serif',serif; font-size:20px; color:var(--red); }
+
+/* ─── NOTES ──────────────────────────────────────── */
+.notegrid { display:flex; flex-direction:column; gap:8px; }
+.notecard {
+  background:var(--surf); border:1px solid var(--b1);
+  border-radius:var(--r); padding:14px;
+  cursor:pointer; transition:background .15s;
+  position:relative; overflow:hidden;
+}
+.notecard::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--nc,var(--t3)); }
+.notecard:active { background:var(--bg2); }
+.nctitle { font-size:13px; font-weight:500; padding-left:10px; margin-bottom:2px; }
+.ncmeta { font-size:10px; color:var(--t3); padding-left:10px; }
+.nctags { display:flex; gap:4px; flex-wrap:wrap; padding-left:10px; margin-top:7px; }
+.ntag { font-size:10px; color:var(--t3); padding:2px 7px; border-radius:10px; background:var(--bg2); }
+.noteview {
+  position:fixed; inset:0; max-width:430px; margin:0 auto;
+  background:var(--bg); z-index:100;
+  display:none; flex-direction:column;
+}
+.noteview.open { display:flex; animation:slideup .22s ease; }
+@keyframes slideup { from{transform:translateY(100%)} to{transform:translateY(0)} }
+.nvhead { display:flex; align-items:center; gap:10px; padding:14px 18px; border-bottom:1px solid var(--b1); }
+.nvback { font-size:22px; color:var(--t2); padding:0 4px; }
+.nvbody { flex:1; overflow-y:auto; padding:20px 18px; }
+.nvtitle { font-family:'Instrument Serif',serif; font-size:24px; font-weight:400; margin-bottom:5px; }
+.nvmeta { font-size:11px; color:var(--t3); margin-bottom:14px; letter-spacing:.3px; }
+.nvcontent { font-size:13px; line-height:1.9; color:var(--t2); white-space:pre-wrap; }
+.nvtags { display:flex; gap:5px; flex-wrap:wrap; margin-top:14px; }
+.nvai { display:none; margin-top:18px; padding:14px; background:var(--bg2); border-radius:var(--rs); font-size:12px; line-height:1.8; color:var(--t2); border-left:2px solid var(--t3); }
+.nvai-lbl { font-size:10px; color:var(--t3); letter-spacing:1px; margin-bottom:8px; }
+
+/* ─── FLASHCARDS ─────────────────────────────────── */
+.fcprog { display:flex; gap:3px; margin-bottom:16px; }
+.fcp { height:3px; flex:1; border-radius:2px; background:var(--bg3); transition:background .3s; }
+.fcp.dn { background:var(--t1); }
+.fcp.cur { background:var(--t2); }
+.fcstage { display:flex; flex-direction:column; align-items:center; gap:14px; }
+.fcontainer { width:100%; height:220px; perspective:1000px; cursor:pointer; }
+.finnner { width:100%; height:100%; position:relative; transform-style:preserve-3d; transition:transform .4s ease; }
+.finnner.flip { transform:rotateY(180deg); }
+.fface {
+  position:absolute; inset:0;
+  border:1px solid var(--b1); border-radius:var(--r);
+  background:var(--surf);
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  padding:26px; text-align:center;
+  backface-visibility:hidden; -webkit-backface-visibility:hidden;
+}
+.fface.back { transform:rotateY(180deg); background:var(--bg2); }
+.fflabel { font-size:10px; color:var(--t3); letter-spacing:1.2px; margin-bottom:12px; }
+.fftxt { font-family:'Instrument Serif',serif; font-size:19px; font-weight:400; line-height:1.4; }
+.ffhint { font-size:11px; color:var(--t3); margin-top:13px; }
+.fcnav { display:flex; align-items:center; gap:18px; }
+.fcnavbtn {
+  width:38px; height:38px; border-radius:50%;
+  border:1px solid var(--b2);
+  display:flex; align-items:center; justify-content:center;
+  font-size:15px; background:var(--surf); transition:all .15s;
+}
+.fcnavbtn:active { background:var(--bg2); }
+.fcctr { font-size:12px; color:var(--t3); }
+.mastrow { display:flex; gap:6px; width:100%; }
+.mastbtn {
+  flex:1; padding:9px; border-radius:var(--rs);
+  border:1px solid var(--b2); font-size:11px;
+  color:var(--t2); cursor:pointer; transition:all .15s;
+  font-family:inherit; background:none;
+}
+.mastbtn:active { background:var(--bg2); }
+.mastbtn.on { background:var(--t1); color:var(--bg); border-color:var(--t1); }
+
+/* ─── TOOLS ──────────────────────────────────────── */
+.tooloutput {
+  background:var(--surf); border:1px solid var(--b1);
+  border-radius:var(--r); padding:16px;
+  font-size:13px; line-height:1.8; color:var(--t2);
+  min-height:180px;
+}
+
+/* ─── POMODORO ───────────────────────────────────── */
+.pomoringwrap { display:flex; flex-direction:column; align-items:center; padding:20px 0 14px; }
+.pomoring { width:150px; height:150px; margin-bottom:8px; position:relative; }
+.pomoring svg { transform:rotate(-90deg); }
+.pomotrack { stroke:var(--bg3); }
+.pomofill { stroke:var(--t1); stroke-linecap:round; transition:stroke-dashoffset 1s linear; }
+.pomocenter { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.pomotime { font-family:'Instrument Serif',serif; font-size:32px; font-weight:400; line-height:1; }
+.pomosess { font-size:9px; color:var(--t3); letter-spacing:2px; margin-top:4px; }
+.pomocount { font-size:11px; color:var(--t3); margin-bottom:12px; }
+.pomoctrl { display:flex; gap:8px; justify-content:center; }
+.pomobtn { padding:10px 24px; border-radius:24px; border:1.5px solid var(--t1); font-size:13px; font-family:inherit; transition:all .15s; }
+.pomobtn.pri { background:var(--t1); color:var(--bg); }
+.pomobtn.gst { color:var(--t1); background:none; }
+.pomobtn:active { opacity:.8; }
+
+/* ─── ANALYTICS ──────────────────────────────────── */
+.barrow { display:flex; align-items:center; gap:10px; padding:7px 0; border-bottom:1px solid var(--b1); }
+.barrow:last-child { border-bottom:none; }
+.barlbl { font-size:11px; color:var(--t2); width:70px; flex-shrink:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.bartrack { flex:1; height:4px; background:var(--bg3); border-radius:2px; overflow:hidden; }
+.barfill { height:100%; border-radius:2px; background:var(--t1); transition:width .5s; }
+.barval { font-size:11px; color:var(--t3); width:30px; text-align:right; flex-shrink:0; }
+
+/* ─── MODALS / SHEETS ────────────────────────────── */
+.overlay {
+  position:fixed; inset:0; max-width:430px; margin:0 auto;
+  background:rgba(0,0,0,.4); backdrop-filter:blur(3px);
+  z-index:200; display:none; align-items:flex-end; justify-content:center;
+}
+.overlay.open { display:flex; }
+.sheet {
+  background:var(--bg); border-radius:18px 18px 0 0;
+  border-top:1px solid var(--b2);
+  padding:22px 18px 36px; width:100%;
+  animation:shup .22s ease; max-height:92vh; overflow-y:auto;
+}
+@keyframes shup { from{transform:translateY(100%)} to{transform:translateY(0)} }
+.shhandle { width:32px; height:3px; background:var(--bg3); border-radius:2px; margin:0 auto 20px; }
+.shtitle { font-family:'Instrument Serif',serif; font-size:19px; font-weight:400; margin-bottom:18px; }
+.fgroup { display:flex; flex-direction:column; gap:5px; margin-bottom:14px; }
+.flab { font-size:10px; color:var(--t3); letter-spacing:.8px; }
+.frow { display:grid; gap:12px; }
+.frow.two { grid-template-columns:1fr 1fr; }
+.colrow { display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
+.col { width:24px; height:24px; border-radius:50%; cursor:pointer; transition:transform .15s; border:2px solid transparent; outline:2px solid transparent; outline-offset:2px; }
+.col.on { outline-color:var(--t1); }
+
+/* ─── BUTTONS ────────────────────────────────────── */
+.btnp { width:100%; padding:13px; border-radius:var(--r); background:var(--t1); color:var(--bg); font-size:14px; font-weight:500; border:none; cursor:pointer; transition:opacity .15s; margin-top:6px; }
+.btnp:active { opacity:.8; }
+.btng { padding:10px 16px; border-radius:var(--rs); border:1px solid var(--b2); font-size:13px; color:var(--t2); background:none; cursor:pointer; transition:all .15s; }
+.btng:active { background:var(--bg2); }
+.btnsm { padding:7px 13px; border-radius:var(--rs); font-size:12px; border:1px solid var(--b2); color:var(--t2); background:none; cursor:pointer; transition:all .15s; }
+.btnsm:active { background:var(--bg2); }
+
+/* ─── BOTTOM NAV ─────────────────────────────────── */
+.bnav {
+  position:fixed; bottom:0;
+  left:50%; transform:translateX(-50%);
+  width:100%; max-width:430px;
+  height:var(--navh); background:var(--bg);
+  border-top:1px solid var(--b1);
+  display:flex; align-items:center; justify-content:space-around;
+  padding:0 4px; z-index:50;
+}
+.nitem {
+  flex:1; display:flex; flex-direction:column;
+  align-items:center; gap:2px; padding:7px 2px;
+  border-radius:var(--rs); transition:all .15s;
+  cursor:pointer; color:var(--t3); border:none; background:none;
+}
+.nitem.on { color:var(--t1); }
+.nicon { font-size:20px; transition:transform .15s; }
+.nitem.on .nicon { transform:scale(1.1); }
+.nlabel { font-size:9px; letter-spacing:.4px; font-weight:500; }
+
+/* ─── ONBOARD ────────────────────────────────────── */
+#scr-onboard {
+  justify-content:flex-start; align-items:center;
+  min-height:100vh; padding:0 22px 40px;
+  padding-bottom:40px !important;
+}
+.oblogo { display:flex; flex-direction:column; align-items:center; margin-bottom:28px; }
+.obmark {
+  width:52px; height:52px; border-radius:14px;
+  background:var(--t1); color:var(--bg);
+  display:flex; align-items:center; justify-content:center;
+  font-size:22px; margin-bottom:10px;
+}
+.obtitle { font-family:'Instrument Serif',serif; font-size:26px; text-align:center; margin-bottom:2px; }
+.obbrand { font-size:9px; color:var(--t3); letter-spacing:2px; text-align:center; }
+.obform { width:100%; display:flex; flex-direction:column; gap:16px; }
+.oblbl { font-size:10px; color:var(--t3); letter-spacing:1px; display:block; margin-bottom:6px; }
+.obmoods { display:flex; gap:7px; flex-wrap:wrap; }
+.obmood { padding:6px 12px; border-radius:20px; border:1px solid var(--b2); font-size:12px; color:var(--t2); cursor:pointer; transition:all .15s; }
+.obmood.on { background:var(--t1); color:var(--bg); border-color:var(--t1); }
+.auth-tab {
+  flex:1; padding:11px; font-size:13px; font-weight:500;
+  font-family:inherit; cursor:pointer; background:none;
+  color:var(--t3); border:none; transition:all .15s;
+}
+.auth-tab-on { background:var(--t1); color:var(--bg); }
+
+/* ─── MISC ───────────────────────────────────────── */
+.empty { font-size:13px; color:var(--t3); padding:20px 0; text-align:center; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+.loading { color:var(--t3); font-size:13px; animation:pulse 1.2s infinite; }
+.scursor::after { content:'▋'; animation:pulse .7s infinite; font-size:11px; }
+.rangein { -webkit-appearance:none; border:none; padding:6px 0; background:transparent; cursor:pointer; height:auto; }
+.rangein::-webkit-slider-track { height:3px; background:var(--bg3); border-radius:2px; }
+.rangein::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:var(--t1); margin-top:-7px; }
+
+/* ─── STORAGE BANNER ─────────────────────────────── */
+.storage-banner {
+  background:var(--bg2); border-bottom:1px solid var(--b1);
+  padding:8px 18px; font-size:11px; color:var(--t3);
+  display:flex; align-items:center; gap:8px;
+}
+.storage-dot { width:6px; height:6px; border-radius:50%; background:var(--green); flex-shrink:0; }
+
+/* ─── PROFILE MENU ───────────────────────────────── */
+.profile-overlay {
+  position:fixed; inset:0; max-width:430px; margin:0 auto;
+  z-index:300; display:none;
+}
+.profile-overlay.open { display:block; }
+.profile-menu {
+  position:absolute; top:54px; right:14px;
+  background:var(--surf); border:1px solid var(--b2);
+  border-radius:14px; padding:8px;
+  min-width:220px; box-shadow:0 8px 32px rgba(0,0,0,.15);
+  animation:up .15s ease;
+}
+.pmhead {
+  padding:12px 12px 14px; border-bottom:1px solid var(--b1); margin-bottom:6px;
+}
+.pmname { font-family:'Instrument Serif',serif; font-size:16px; }
+.pmcls { font-size:11px; color:var(--t3); margin-top:2px; }
+.pmrow {
+  display:flex; align-items:center; gap:11px;
+  padding:10px 12px; border-radius:var(--rs);
+  font-size:13px; cursor:pointer; transition:background .15s;
+  color:var(--t1);
+}
+.pmrow:active { background:var(--bg2); }
+.pmrow-icon { font-size:16px; width:20px; text-align:center; flex-shrink:0; }
+.pmrow-label { flex:1; }
+.pmrow-val { font-size:11px; color:var(--t3); }
+.pmrow.danger { color:var(--red); }
+.pmdiv { height:1px; background:var(--b1); margin:6px 0; }
+.pmslider-wrap { padding:6px 12px 10px; }
+.pmslider-label { font-size:10px; color:var(--t3); letter-spacing:.8px; margin-bottom:8px; }
+.pmslider-row { display:flex; align-items:center; gap:10px; }
+.pmslider-a { font-size:11px; color:var(--t3); }
+.pmslider-b { font-size:14px; color:var(--t1); font-weight:600; }
+.pmbadge {
+  font-size:10px; padding:2px 8px; border-radius:10px;
+  background:var(--bg2); color:var(--t3);
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════ AUTH SCREEN ══════════ -->
+<div id="scr-onboard" class="scr on">
+
+  <!-- ── Brand header ── -->
+  <div class="oblogo" style="margin-top:40px">
+    <div class="obmark">✦</div>
+    <div class="obtitle">CortexAI</div>
+    <div class="obbrand">INTELLIGENT STUDY COMPANION · CLASS 5–12</div>
+  </div>
+
+  <!-- ── Tab switcher ── -->
+  <div id="auth-tabs" style="display:flex;gap:0;border:1px solid var(--b2);border-radius:var(--r);overflow:hidden;margin:0 0 22px">
+    <button id="tab-login"  class="auth-tab auth-tab-on" onclick="showAuthTab('login')">Log In</button>
+    <button id="tab-signup" class="auth-tab"             onclick="showAuthTab('signup')">Sign Up</button>
+  </div>
+
+  <!-- ── LOGIN PANEL ── -->
+  <div id="panel-login" class="obform">
+    <div>
+      <label class="oblbl">USERNAME</label>
+      <input id="li-user" type="text" placeholder="Your username" autocomplete="username" autocapitalize="off">
+    </div>
+    <div style="position:relative">
+      <label class="oblbl">PASSWORD</label>
+      <input id="li-pass" type="password" placeholder="Your password" autocomplete="current-password">
+      <button onclick="togglePw('li-pass','li-eye')" id="li-eye" style="position:absolute;right:11px;bottom:11px;font-size:15px;color:var(--t3);background:none;border:none;cursor:pointer">👁</button>
+    </div>
+    <div id="li-err" style="font-size:12px;color:var(--red);min-height:16px;margin-top:-6px"></div>
+    <button class="btnp" id="li-go" style="margin-top:4px" onclick="doLogin()">Log In →</button>
+    <p style="text-align:center;font-size:12px;color:var(--t3);margin-top:10px">
+      No account? <button onclick="showAuthTab('signup')" style="color:var(--t1);font-size:12px;text-decoration:underline;background:none;border:none;cursor:pointer">Sign up free</button>
+    </p>
+  </div>
+
+  <!-- ── SIGNUP PANEL ── -->
+  <div id="panel-signup" class="obform" style="display:none">
+    <div>
+      <label class="oblbl">FULL NAME</label>
+      <input id="su-name" type="text" placeholder="Enter your full name" autocomplete="name">
+    </div>
+    <div>
+      <label class="oblbl">USERNAME</label>
+      <input id="su-user" type="text" placeholder="Choose a username (no spaces)" autocomplete="username" autocapitalize="off">
+    </div>
+    <div>
+      <label class="oblbl">YOUR CLASS</label>
+      <select id="su-cls">
+        <option value="">— Select your class —</option>
+        <option>Class 5</option><option>Class 6</option><option>Class 7</option>
+        <option>Class 8</option><option>Class 9</option><option>Class 10</option>
+        <option>Class 11</option><option>Class 12</option>
+      </select>
+    </div>
+    <div style="position:relative">
+      <label class="oblbl">PASSWORD</label>
+      <input id="su-pass" type="password" placeholder="At least 6 characters" autocomplete="new-password">
+      <button onclick="togglePw('su-pass','su-eye')" id="su-eye" style="position:absolute;right:11px;bottom:11px;font-size:15px;color:var(--t3);background:none;border:none;cursor:pointer">👁</button>
+    </div>
+    <div style="position:relative">
+      <label class="oblbl">CONFIRM PASSWORD</label>
+      <input id="su-pass2" type="password" placeholder="Repeat password" autocomplete="new-password">
+      <button onclick="togglePw('su-pass2','su-eye2')" id="su-eye2" style="position:absolute;right:11px;bottom:11px;font-size:15px;color:var(--t3);background:none;border:none;cursor:pointer">👁</button>
+    </div>
+    <div>
+      <label class="oblbl">HOW ARE YOU FEELING TODAY?</label>
+      <div class="obmoods" id="ob-moods">
+        <button class="obmood" data-v="😊 Great">😊 Great</button>
+        <button class="obmood" data-v="😐 Okay">😐 Okay</button>
+        <button class="obmood" data-v="😔 Tired">😔 Tired</button>
+        <button class="obmood" data-v="🔥 Motivated">🔥 Motivated</button>
+        <button class="obmood" data-v="😤 Stressed">😤 Stressed</button>
+      </div>
+    </div>
+    <div id="su-err" style="font-size:12px;color:var(--red);min-height:16px;margin-top:-6px"></div>
+    <button class="btnp" id="su-go" style="margin-top:4px" onclick="doSignup()">Create Account →</button>
+    <p style="text-align:center;font-size:12px;color:var(--t3);margin-top:10px">
+      Already have an account? <button onclick="showAuthTab('login')" style="color:var(--t1);font-size:12px;text-decoration:underline;background:none;border:none;cursor:pointer">Log in</button>
+    </p>
+  </div>
+
+</div>
+
+<!-- ══════════ HOME ══════════ -->
+<div id="scr-home" class="scr">
+  <div class="bar">
+    <div class="bar-brand">
+      <div class="bar-name">CortexAI</div>
+      <div class="bar-sub" id="bar-cls-sub">—</div>
+    </div>
+    <div class="bar-r">
+      <button class="tbtn" data-th>☀</button>
+      <div class="ava" id="ava-home" onclick="toggleProfileMenu()" style="cursor:pointer">?</div>
+    </div>
+  </div>
+
+  <!-- Profile Menu -->
+  <div class="profile-overlay" id="profile-overlay" onclick="closeProfileMenu()">
+    <div class="profile-menu" onclick="event.stopPropagation()">
+      <div class="pmhead">
+        <div class="pmname" id="pm-name">—</div>
+        <div class="pmcls" id="pm-cls">—</div>
+      </div>
+
+      <!-- Text Size -->
+      <div class="pmslider-wrap">
+        <div class="pmslider-label">TEXT SIZE</div>
+        <div class="pmslider-row">
+          <span class="pmslider-a">A</span>
+          <input type="range" class="rangein" id="txt-size-range" min="12" max="18" value="14" style="flex:1" oninput="changeFontSize(this.value)">
+          <span class="pmslider-b">A</span>
+        </div>
+      </div>
+      <div class="pmdiv"></div>
+
+      <!-- Dark Mode -->
+      <div class="pmrow" onclick="toggleThemeFromMenu()">
+        <span class="pmrow-icon" id="pm-theme-icon">☀️</span>
+        <span class="pmrow-label">Appearance</span>
+        <span class="pmrow-val" id="pm-theme-val">Light</span>
+      </div>
+
+      <!-- Mood -->
+      <div class="pmrow" onclick="openMoodSheet()">
+        <span class="pmrow-icon">😊</span>
+        <span class="pmrow-label">Change Mood</span>
+        <span class="pmrow-val" id="pm-mood-val">—</span>
+      </div>
+
+      <!-- Notifications -->
+      <div class="pmrow" onclick="toggleNotifPref()">
+        <span class="pmrow-icon">🔔</span>
+        <span class="pmrow-label">Study Reminders</span>
+        <span class="pmrow-val pmbadge" id="pm-notif-val">Off</span>
+      </div>
+
+      <!-- Stats -->
+      <div class="pmrow" onclick="goTo('analytics');closeProfileMenu()">
+        <span class="pmrow-icon">📊</span>
+        <span class="pmrow-label">My Progress</span>
+        <span class="pmrow-val">→</span>
+      </div>
+
+      <div class="pmdiv"></div>
+
+      <!-- Log out -->
+      <div class="pmrow danger" onclick="confirmLogout()">
+        <span class="pmrow-icon">⎋</span>
+        <span class="pmrow-label">Log Out</span>
+      </div>
+    </div>
+  </div>
+  <div class="pad">
+    <div class="welcome">
+      <div class="wname" id="dash-name">—</div>
+      <div class="wsub" id="dash-sub">—</div>
+    </div>
+    <div>
+      <div class="slabel">OVERVIEW</div>
+      <div class="kgrid">
+        <div class="kcard"><div class="kn" id="k-pend">0</div><div class="kl">PENDING</div></div>
+        <div class="kcard"><div class="kn" id="k-done">0</div><div class="kl">COMPLETED</div></div>
+        <div class="kcard"><div class="kn" id="k-notes">0</div><div class="kl">NOTES</div></div>
+        <div class="kcard"><div class="kn" id="k-score">—</div><div class="kl">AVG SCORE</div></div>
+      </div>
+    </div>
+    <div>
+      <div class="slabel">QUICK ACTIONS</div>
+      <div class="qgrid">
+        <button class="qtile" onclick="goTo('tutor')"><div class="qi">◈</div><div class="ql">AI Tutor</div><div class="qs">Ask anything</div></button>
+        <button class="qtile" onclick="goTo('practice')"><div class="qi">◎</div><div class="ql">Practice</div><div class="qs">Generate quiz</div></button>
+        <button class="qtile" onclick="goTo('schedule');setTimeout(()=>openSheet('task-sheet'),60)"><div class="qi">＋</div><div class="ql">Add Task</div><div class="qs">Track homework</div></button>
+        <button class="qtile" onclick="goTo('tools')"><div class="qi">✦</div><div class="ql">AI Tools</div><div class="qs">Summarize & more</div></button>
+      </div>
+    </div>
+    <div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">
+        <div class="slabel" style="margin:0">UPCOMING TASKS</div>
+        <button style="font-size:11px;color:var(--t3)" onclick="goTo('schedule')">View all</button>
+      </div>
+      <div class="card"><div id="dash-tasks"></div></div>
+    </div>
+    <div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">
+        <div class="slabel" style="margin:0">MY GOALS</div>
+        <span id="goal-count" style="font-size:10px;color:var(--t3)"></span>
+      </div>
+      <div class="card">
+        <!-- Category filter pills -->
+        <div class="goal-cats" id="goal-cat-filter">
+          <button class="goal-cat-btn on" data-cat="all" onclick="filterGoals('all',this)">All</button>
+          <button class="goal-cat-btn" data-cat="academic" onclick="filterGoals('academic',this)">📚 Academic</button>
+          <button class="goal-cat-btn" data-cat="health" onclick="filterGoals('health',this)">🏃 Health</button>
+          <button class="goal-cat-btn" data-cat="personal" onclick="filterGoals('personal',this)">🌟 Personal</button>
+          <button class="goal-cat-btn" data-cat="habit" onclick="filterGoals('habit',this)">🔁 Habits</button>
+        </div>
+        <div id="goals-list"></div>
+        <!-- Add goal row -->
+        <div class="goal-add-row">
+          <select id="goal-cat-sel" class="goal-cat-sel" style="width:auto;padding:9px 10px;font-size:12px">
+            <option value="academic">📚</option>
+            <option value="health">🏃</option>
+            <option value="personal">🌟</option>
+            <option value="habit">🔁</option>
+          </select>
+          <input id="goal-inp" placeholder="Add a new goal…" style="flex:1;padding:9px 11px;font-size:13px" onkeydown="if(event.key==='Enter')addGoal()">
+          <button onclick="addGoal()" style="padding:9px 15px;border-radius:var(--rs);background:var(--t1);color:var(--bg);border:none;font-size:14px;cursor:pointer;font-family:inherit;flex-shrink:0">+</button>
+        </div>
+      </div>
+    </div>
+    <div style="height:4px"></div>
+  </div>
+</div>
+
+<!-- ══════════ AI TUTOR ══════════ -->
+<div id="scr-tutor" class="scr">
+  <div class="bar">
+    <div class="bar-brand">
+      <div class="bar-name">CortexAI</div>
+      <div class="bar-sub" id="subj-label">Mathematics</div>
+    </div>
+    <div class="bar-r">
+      <button class="tbtn" data-th>☀</button>
+      <button onclick="clearChat()" class="btnsm">Clear</button>
+    </div>
+  </div>
+  <div class="subjstrip" id="subj-strip"></div>
+  <div class="chatbox" id="chatbox">
+    <div class="cempty" id="chat-empty">
+      <div class="ceico">✦</div>
+      <div class="cetxt">Ask CortexAI anything about your studies</div>
+      <div class="cesuggest">
+        <button class="csg" onclick="useSugg(this)">Explain quadratic formula</button>
+        <button class="csg" onclick="useSugg(this)">What is photosynthesis?</button>
+        <button class="csg" onclick="useSugg(this)">Newton's laws of motion</button>
+        <button class="csg" onclick="useSugg(this)">Tips for board exams</button>
+      </div>
+    </div>
+  </div>
+  <div class="chatbar">
+    <textarea class="chatin" id="chat-in" rows="1" placeholder="Ask a question… (Enter to send)"
+      oninput="autoH(this)"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}"></textarea>
+    <button class="sendbtn" id="send-btn" onclick="sendChat()">→</button>
+  </div>
+</div>
+
+<!-- ══════════ SCHEDULE ══════════ -->
+<div id="scr-schedule" class="scr">
+  <div class="bar">
+    <div class="bar-brand"><div class="bar-name">Schedule</div></div>
+    <div class="bar-r">
+      <button class="tbtn" data-th>☀</button>
+      <button onclick="openSheet('task-sheet')" style="padding:7px 13px;border-radius:20px;background:var(--t1);color:var(--bg);border:none;font-size:12px;cursor:pointer;font-family:inherit">+ Task</button>
+    </div>
+  </div>
+  <div class="pad">
+    <div class="pills" id="task-filter-pills">
+      <button class="pill on" onclick="filterTasks('all',this)">All</button>
+      <button class="pill" onclick="filterTasks('pending',this)">Pending</button>
+      <button class="pill" onclick="filterTasks('done',this)">Done</button>
+      <button class="pill" onclick="filterTasks('high',this)">High priority</button>
+    </div>
+    <div class="card"><div id="task-list"></div></div>
+    <div>
+      <div class="slabel">POMODORO TIMER</div>
+      <div class="card">
+        <div class="pomoringwrap">
+          <div class="pomoring">
+            <svg width="150" height="150" viewBox="0 0 150 150">
+              <circle class="pomotrack" cx="75" cy="75" r="64" fill="none" stroke-width="4"/>
+              <circle class="pomofill" id="pomo-ring" cx="75" cy="75" r="64" fill="none" stroke-width="4"
+                stroke-dasharray="402.12" stroke-dashoffset="0"/>
+            </svg>
+            <div class="pomocenter">
+              <div class="pomotime" id="pomo-disp">25:00</div>
+              <div class="pomosess" id="pomo-sess">FOCUS</div>
+            </div>
+          </div>
+          <div class="pomocount" id="pomo-cnt">0 sessions completed</div>
+          <div class="pomoctrl">
+            <button class="pomobtn pri" id="pomo-btn" onclick="togglePomo()">Start</button>
+            <button class="pomobtn gst" onclick="resetPomo()">Reset</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px">
+          <div class="fgroup"><label class="flab">FOCUS (min)</label><input type="number" id="p-focus" value="25" min="1" max="90" onchange="if(!pomoRun)resetPomo()"></div>
+          <div class="fgroup"><label class="flab">BREAK (min)</label><input type="number" id="p-break" value="5" min="1" max="30"></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">
+        <div class="slabel" style="margin:0">AI STUDY PLAN</div>
+        <button onclick="genSchedule()" id="sched-btn" class="btnsm">✦ Generate</button>
+      </div>
+      <div class="card" id="sched-out"><div class="empty">Tap Generate for your personalized 7-day study plan.</div></div>
+    </div>
+    <div style="height:4px"></div>
+  </div>
+</div>
+
+<!-- ══════════ PRACTICE ══════════ -->
+<div id="scr-practice" class="scr">
+  <div class="bar">
+    <div class="bar-brand"><div class="bar-name">Practice</div></div>
+    <div class="bar-r"><button class="tbtn" data-th>☀</button></div>
+  </div>
+  <div class="pad">
+    <div class="card">
+      <div class="fgroup"><label class="flab">SUBJECT</label>
+        <select id="p-sub">
+          <option>Mathematics</option><option>Physics</option><option>Chemistry</option>
+          <option>Biology</option><option>History</option><option>Geography</option>
+          <option>English</option><option>Computer Science</option><option>Economics</option>
+        </select>
+      </div>
+      <div class="fgroup"><label class="flab">TOPIC</label><input id="p-topic" placeholder="e.g. Quadratic Equations, Photosynthesis…"></div>
+      <div class="frow two" style="margin-bottom:14px">
+        <div class="fgroup" style="margin:0"><label class="flab">TYPE</label>
+          <select id="p-type"><option value="mcq">Multiple Choice</option><option value="short">Short Answer</option></select>
+        </div>
+        <div class="fgroup" style="margin:0"><label class="flab">DIFFICULTY</label>
+          <select id="p-diff"><option>Easy</option><option selected>Medium</option><option>Hard</option></select>
+        </div>
+      </div>
+      <div class="fgroup">
+        <label class="flab">QUESTIONS: <span id="p-cnt-lbl">5</span></label>
+        <input type="range" class="rangein" id="p-cnt" min="3" max="10" value="5" style="width:100%;margin-top:6px"
+          oninput="$('p-cnt-lbl').textContent=this.value">
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--t2);margin-bottom:14px;cursor:pointer">
+        <input type="checkbox" id="p-exam" style="width:auto"> ⏱ Exam Mode (timed)
+      </label>
+      <button class="btnp" id="gen-btn" onclick="genQ()">Generate Questions</button>
+    </div>
+    <div class="exam-banner" id="exam-banner">
+      <span style="font-size:16px">⏱</span>
+      <span class="etimer" id="exam-timer">—</span>
+      <span style="font-size:11px;color:var(--t3);flex:1">remaining</span>
+    </div>
+    <div id="q-area"></div>
+    <div id="submit-wrap" style="display:none">
+      <button class="btnp" onclick="submitPrac()">Submit Answers</button>
+    </div>
+    <div style="height:4px"></div>
+  </div>
+</div>
+
+<!-- ══════════ NOTES ══════════ -->
+<div id="scr-notes" class="scr">
+  <div class="bar">
+    <div class="bar-brand"><div class="bar-name">Notes</div></div>
+    <div class="bar-r">
+      <button class="tbtn" data-th>☀</button>
+      <button onclick="openSheet('note-sheet')" style="padding:7px 13px;border-radius:20px;background:var(--t1);color:var(--bg);border:none;font-size:12px;cursor:pointer;font-family:inherit">+ Note</button>
+    </div>
+  </div>
+  <div class="pad">
+    <input id="note-search" placeholder="🔍  Search notes…" oninput="renderNotes()">
+    <div class="notegrid" id="note-grid"></div>
+    <div style="height:4px"></div>
+  </div>
+</div>
+
+<!-- Note viewer -->
+<div class="noteview" id="note-view">
+  <div class="nvhead">
+    <button class="nvback" onclick="closeNoteView()">←</button>
+    <div style="flex:1"><div id="nv-subj" style="font-size:10px;color:var(--t3);letter-spacing:.8px"></div></div>
+    <button onclick="aiNoteSum()" class="btnsm">✦ AI</button>
+    <button onclick="delNote()" class="btnsm" style="color:var(--red);border-color:rgba(185,28,28,.2);margin-left:6px">Delete</button>
+  </div>
+  <div class="nvbody">
+    <div class="nvtitle" id="nv-title"></div>
+    <div class="nvmeta" id="nv-meta"></div>
+    <div class="nvtags" id="nv-tags"></div>
+    <div class="nvcontent" id="nv-content"></div>
+    <div class="nvai" id="nv-ai">
+      <div class="nvai-lbl">✦ CortexAI SUMMARY</div>
+      <pre id="nv-ai-text"></pre>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ FLASHCARDS ══════════ -->
+<div id="scr-flash" class="scr">
+  <div class="bar">
+    <div class="bar-brand"><div class="bar-name">Flashcards</div></div>
+    <div class="bar-r">
+      <button class="tbtn" data-th>☀</button>
+      <button onclick="openSheet('card-sheet')" style="padding:7px 13px;border-radius:20px;background:var(--t1);color:var(--bg);border:none;font-size:12px;cursor:pointer;font-family:inherit">+ Card</button>
+    </div>
+  </div>
+  <div class="pad">
+    <div class="pills" id="card-filter-row" style="overflow-x:auto;flex-wrap:nowrap"></div>
+    <div class="fcstage">
+      <div class="fcprog" id="fc-prog"></div>
+      <div class="fcontainer" onclick="flipCard()">
+        <div class="finnner" id="fc-inner">
+          <div class="fface front">
+            <div class="fflabel">QUESTION</div>
+            <div class="fftxt" id="fc-front">Add your first flashcard →</div>
+            <div class="ffhint">Tap to reveal answer</div>
+          </div>
+          <div class="fface back">
+            <div class="fflabel">ANSWER</div>
+            <div class="fftxt" id="fc-back"></div>
+            <div class="ffhint" style="color:var(--t3)">↻ Tap to flip back</div>
+          </div>
+        </div>
+      </div>
+      <div class="fcnav">
+        <button class="fcnavbtn" onclick="prevCard()">←</button>
+        <div class="fcctr" id="fc-ctr">0 / 0</div>
+        <button class="fcnavbtn" onclick="nextCard()">→</button>
+      </div>
+      <div class="mastrow">
+        <button class="mastbtn" onclick="setMast(0)">Not yet</button>
+        <button class="mastbtn" onclick="setMast(1)">Getting there</button>
+        <button class="mastbtn" onclick="setMast(2)">Mastered ✓</button>
+      </div>
+    </div>
+    <div>
+      <div class="slabel">MASTERY</div>
+      <div class="card" id="mast-stats"></div>
+    </div>
+    <div style="height:4px"></div>
+  </div>
+</div>
+
+<!-- ══════════ AI TOOLS ══════════ -->
+<div id="scr-tools" class="scr">
+  <div class="bar">
+    <div class="bar-brand"><div class="bar-name">AI Tools</div></div>
+    <div class="bar-r"><button class="tbtn" data-th>☀</button></div>
+  </div>
+  <div class="pad">
+    <div class="pills" id="tool-tabs" style="overflow-x:auto;flex-wrap:nowrap">
+      <button class="pill on" onclick="setTool('summary',this)">📄 Summary</button>
+      <button class="pill" onclick="setTool('keypoints',this)">🔑 Key Points</button>
+      <button class="pill" onclick="setTool('explain',this)">💡 Explain</button>
+      <button class="pill" onclick="setTool('quiz',this)">❓ Quiz</button>
+      <button class="pill" onclick="setTool('mindmap',this)">🗺 Mind Map</button>
+      <button class="pill" onclick="setTool('mnemonic',this)">🧠 Mnemonics</button>
+      <button class="pill" onclick="setTool('vocab',this)">📖 Vocabulary</button>
+    </div>
+    <div>
+      <label class="flab" id="tool-inp-lbl" style="display:block;margin-bottom:8px">PASTE TEXT OR TOPIC</label>
+      <textarea id="tool-inp" rows="6" placeholder="Enter your content here…"></textarea>
+      <button class="btnp" id="tool-run-btn" onclick="runTool()">Run Tool</button>
+    </div>
+    <div>
+      <div class="slabel">OUTPUT</div>
+      <div class="tooloutput" id="tool-out"><div class="empty" style="padding:20px 0">Output will appear here.</div></div>
+      <button id="copy-btn" onclick="copyOut()" class="btng" style="display:none;width:100%;margin-top:10px;text-align:center">📋 Copy Output</button>
+    </div>
+    <div style="height:4px"></div>
+  </div>
+</div>
+
+<!-- ══════════ ANALYTICS ══════════ -->
+<div id="scr-analytics" class="scr">
+  <div class="bar">
+    <div class="bar-brand"><div class="bar-name">Analytics</div></div>
+    <div class="bar-r"><button class="tbtn" data-th>☀</button></div>
+  </div>
+  <div class="pad">
+    <div class="kgrid">
+      <div class="kcard"><div class="kn" id="an-t">0</div><div class="kl">TOTAL TASKS</div></div>
+      <div class="kcard"><div class="kn" id="an-d">0</div><div class="kl">COMPLETED</div></div>
+      <div class="kcard"><div class="kn" id="an-s">—</div><div class="kl">AVG SCORE</div></div>
+      <div class="kcard"><div class="kn" id="an-m">0/0</div><div class="kl">MASTERED</div></div>
+    </div>
+    <div><div class="slabel">TASKS BY SUBJECT</div><div class="card" id="an-subj"><div class="empty" style="padding:8px 0">No tasks yet.</div></div></div>
+    <div><div class="slabel">SCORE HISTORY</div><div class="card" id="an-scores"><div class="empty" style="padding:8px 0">No tests yet.</div></div></div>
+    <div><div class="slabel">FLASHCARD MASTERY</div><div class="card" id="an-mast"><div class="empty" style="padding:8px 0">No flashcards yet.</div></div></div>
+    <div style="height:4px"></div>
+  </div>
+</div>
+
+<!-- ══════════ BOTTOM NAV ══════════ -->
+<nav class="bnav" id="bnav" style="display:none">
+  <button class="nitem on" data-t="home" onclick="goTo('home')"><div class="nicon">⌂</div><div class="nlabel">Home</div></button>
+  <button class="nitem" data-t="tutor" onclick="goTo('tutor')"><div class="nicon">◈</div><div class="nlabel">Tutor</div></button>
+  <button class="nitem" data-t="schedule" onclick="goTo('schedule')"><div class="nicon">◷</div><div class="nlabel">Schedule</div></button>
+  <button class="nitem" data-t="practice" onclick="goTo('practice')"><div class="nicon">◎</div><div class="nlabel">Practice</div></button>
+  <button class="nitem" data-t="notes" onclick="goTo('notes')"><div class="nicon">◫</div><div class="nlabel">Notes</div></button>
+  <button class="nitem" data-t="flash" onclick="goTo('flash')"><div class="nicon">◻</div><div class="nlabel">Cards</div></button>
+  <button class="nitem" data-t="tools" onclick="goTo('tools')"><div class="nicon">✦</div><div class="nlabel">Tools</div></button>
+  <button class="nitem" data-t="analytics" onclick="goTo('analytics')"><div class="nicon">▦</div><div class="nlabel">Stats</div></button>
+</nav>
+
+<!-- ══════════ MOOD SHEET ══════════ -->
+<div class="overlay" id="mood-sheet" onclick="if(event.target===this)closeSheet('mood-sheet')">
+  <div class="sheet">
+    <div class="shhandle"></div>
+    <div class="shtitle">How are you feeling?</div>
+    <div class="obmoods" id="mood-sheet-moods">
+      <button class="obmood" data-v="😊 Great" onclick="pickMood(this)">😊 Great</button>
+      <button class="obmood" data-v="😐 Okay" onclick="pickMood(this)">😐 Okay</button>
+      <button class="obmood" data-v="😔 Tired" onclick="pickMood(this)">😔 Tired</button>
+      <button class="obmood" data-v="🔥 Motivated" onclick="pickMood(this)">🔥 Motivated</button>
+      <button class="obmood" data-v="😤 Stressed" onclick="pickMood(this)">😤 Stressed</button>
+      <button class="obmood" data-v="🤩 Excited" onclick="pickMood(this)">🤩 Excited</button>
+      <button class="obmood" data-v="😴 Sleepy" onclick="pickMood(this)">😴 Sleepy</button>
+    </div>
+    <button class="btng" onclick="closeSheet('mood-sheet')" style="width:100%;text-align:center;margin-top:18px">Close</button>
+  </div>
+</div>
+
+
+<div class="overlay" id="task-sheet" onclick="if(event.target===this)closeSheet('task-sheet')">
+  <div class="sheet">
+    <div class="shhandle"></div>
+    <div class="shtitle">New Task</div>
+    <div class="fgroup"><label class="flab">TITLE</label><input id="ts-title" placeholder="e.g. Complete Chapter 5 exercises"></div>
+    <div class="frow two" style="margin-bottom:14px">
+      <div class="fgroup" style="margin:0"><label class="flab">SUBJECT</label>
+        <select id="ts-sub"><option>Mathematics</option><option>Physics</option><option>Chemistry</option><option>Biology</option><option>History</option><option>Geography</option><option>English</option><option>Computer Science</option></select>
+      </div>
+      <div class="fgroup" style="margin:0"><label class="flab">PRIORITY</label>
+        <select id="ts-pri"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select>
+      </div>
+    </div>
+    <div class="fgroup"><label class="flab">DUE DATE</label><input type="date" id="ts-due"></div>
+    <button class="btnp" onclick="addTask()">Save Task</button>
+    <button class="btng" onclick="closeSheet('task-sheet')" style="width:100%;text-align:center;margin-top:8px">Cancel</button>
+  </div>
+</div>
+
+<div class="overlay" id="note-sheet" onclick="if(event.target===this)closeSheet('note-sheet')">
+  <div class="sheet">
+    <div class="shhandle"></div>
+    <div class="shtitle">New Note</div>
+    <div class="fgroup"><label class="flab">TITLE</label><input id="ns-title" placeholder="Note title"></div>
+    <div class="fgroup"><label class="flab">SUBJECT</label>
+      <select id="ns-sub"><option>Mathematics</option><option>Physics</option><option>Chemistry</option><option>Biology</option><option>History</option><option>Geography</option><option>English</option><option>Computer Science</option></select>
+    </div>
+    <div class="fgroup"><label class="flab">CONTENT</label><textarea id="ns-body" rows="7" placeholder="Write your notes…"></textarea></div>
+    <div class="fgroup"><label class="flab">TAGS (comma separated)</label><input id="ns-tags" placeholder="e.g. formulas, chapter-4"></div>
+    <div class="fgroup">
+      <label class="flab">COLOR</label>
+      <div class="colrow" id="colrow">
+        <div class="col on" style="background:#78716c" data-c="#78716c" onclick="pickCol(this)"></div>
+        <div class="col" style="background:#b91c1c" data-c="#b91c1c" onclick="pickCol(this)"></div>
+        <div class="col" style="background:#166534" data-c="#166534" onclick="pickCol(this)"></div>
+        <div class="col" style="background:#1d4ed8" data-c="#1d4ed8" onclick="pickCol(this)"></div>
+        <div class="col" style="background:#92400e" data-c="#92400e" onclick="pickCol(this)"></div>
+        <div class="col" style="background:#6d28d9" data-c="#6d28d9" onclick="pickCol(this)"></div>
+      </div>
+    </div>
+    <button class="btnp" onclick="saveNote()">Save Note</button>
+    <button class="btng" onclick="closeSheet('note-sheet')" style="width:100%;text-align:center;margin-top:8px">Cancel</button>
+  </div>
+</div>
+
+<div class="overlay" id="card-sheet" onclick="if(event.target===this)closeSheet('card-sheet')">
+  <div class="sheet">
+    <div class="shhandle"></div>
+    <div class="shtitle">New Flashcard</div>
+    <div class="fgroup"><label class="flab">SUBJECT</label>
+      <select id="cf-sub"><option>Mathematics</option><option>Physics</option><option>Chemistry</option><option>Biology</option><option>History</option><option>English</option><option>Computer Science</option></select>
+    </div>
+    <div class="fgroup"><label class="flab">FRONT (Question / Term)</label><textarea id="cf-front" rows="3" placeholder="What is…"></textarea></div>
+    <div class="fgroup"><label class="flab">BACK (Answer / Definition)</label><textarea id="cf-back" rows="3" placeholder="Answer…"></textarea></div>
+    <button class="btnp" onclick="addCard()">Add Card</button>
+    <button class="btng" onclick="closeSheet('card-sheet')" style="width:100%;text-align:center;margin-top:8px">Cancel</button>
+  </div>
+</div>
+
+<!-- ══════════ JAVASCRIPT ══════════ -->
+<script>
+'use strict';
+
+/* ─── STORAGE KEY ─────────────────────────────────────────────
+   All data persists in localStorage under this key.
+   When you move to a server (e.g. Tiny Host / Vercel + Supabase),
+   replace the save() / load() functions below with API calls
+   to your backend endpoint — everything else stays the same.
+   ────────────────────────────────────────────────────────── */
+const STORAGE_KEY  = 'cortexai_v1';
+const ACCOUNTS_KEY = 'cortexai_accounts_v1';
+const SESSION_KEY  = 'cortexai_session_v1';
+
+function loadAccounts() {
+  try { return JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '{}'); } catch(_) { return {}; }
+}
+function saveAccounts(accs) {
+  try { localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accs)); } catch(_) {}
+}
+
+/* ─── INITIAL EMPTY STATE ─────────────────────────────────── */
+const DEFAULT_STATE = {
+  name: '',
+  cls: '',
+  mood: '',
+  dark: false,
+  tasks: [],       // { id, title, subject, due, priority, done }
+  notes: [],       // { id, title, subject, content, tags[], color, date }
+  cards: [],       // { id, front, back, subject, mastery }
+  goals: [],       // { id, text, done, cat }
+  history: [],     // { id, topic, subject, score, got, total, date }
+  chat: [],
+  chatSub: 'Mathematics',
+  cardIdx: 0,
+  cardFilter: 'all',
+  taskFilter: 'all',
+  curTool: 'summary',
+  noteColor: '#78716c',
+  curNote: null,
+  fontSize: 14,
+  notifPref: false,
+};
+
+/* ─── LOAD / SAVE ─────────────────────────────────────────── */
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return { ...DEFAULT_STATE };
+    const saved = JSON.parse(raw);
+    // Merge with defaults so new fields are always present
+    return { ...DEFAULT_STATE, ...saved };
+  } catch (_) {
+    return { ...DEFAULT_STATE };
+  }
+}
+
+let _loggingOut = false;
+
+function saveState() {
+  if (_loggingOut) return;
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(S)); } catch (_) {}
+  // Also persist into the accounts store for the active session
+  const sess = localStorage.getItem(SESSION_KEY);
+  if (sess) {
+    const accs = loadAccounts();
+    if (accs[sess]) { accs[sess].data = { ...S }; saveAccounts(accs); }
+  }
+}
+
+// Debounced save
+let saveTimer = null;
+function save() {
+  if (_loggingOut) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveState, 400);
+}
+
+/* ─── INIT STATE ──────────────────────────────────────────── */
+const S = loadState();
+
+/* ─── HELPERS ─────────────────────────────────────────────── */
+const uid = () => Math.random().toString(36).slice(2, 9);
+const today = () => new Date().toISOString().slice(0, 10);
+const fmtDate = d => { try { return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }); } catch (_) { return d; } };
+const pct = (a, b) => b ? Math.round(a / b * 100) : 0;
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function autoH(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 90) + 'px'; }
+const $ = id => document.getElementById(id);
+
+/* ─── THEME ───────────────────────────────────────────────── */
+function applyTheme() {
+  if (S.dark) document.documentElement.setAttribute('data-dark', '');
+  else document.documentElement.removeAttribute('data-dark');
+  const ic = S.dark ? '☾' : '☀';
+  document.querySelectorAll('[data-th]').forEach(b => b.textContent = ic);
+}
+function toggleTheme() { S.dark = !S.dark; applyTheme(); save(); }
+document.querySelectorAll('[data-th]').forEach(b => b.addEventListener('click', toggleTheme));
+applyTheme();
+
+/* ─── AUTH ────────────────────────────────────────────────── */
+// Accounts are stored separately; SESSION_KEY tracks who is logged in.
+function simpleHash(str) {
+  // Simple deterministic hash (not cryptographic — fine for local storage only)
+  let h = 0;
+  for (let i = 0; i < str.length; i++) h = (Math.imul(31, h) + str.charCodeAt(i)) | 0;
+  return h.toString(36);
+}
+
+function showAuthTab(tab) {
+  const isLogin = tab === 'login';
+  $('panel-login').style.display  = isLogin ? 'flex' : 'none';
+  $('panel-signup').style.display = isLogin ? 'none' : 'flex';
+  $('tab-login').classList.toggle('auth-tab-on',  isLogin);
+  $('tab-signup').classList.toggle('auth-tab-on', !isLogin);
+  $('li-err').textContent = '';
+  $('su-err').textContent = '';
+}
+
+function togglePw(inputId, btnId) {
+  const inp = $(inputId);
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+function doLogin() {
+  const user = $('li-user').value.trim().toLowerCase();
+  const pass = $('li-pass').value;
+  $('li-err').textContent = '';
+  if (!user || !pass) { $('li-err').textContent = 'Please fill in all fields.'; return; }
+  const accs = loadAccounts();
+  const acc  = accs[user];
+  if (!acc) { $('li-err').textContent = 'No account found with that username.'; return; }
+  if (acc.passwordHash !== simpleHash(pass)) { $('li-err').textContent = 'Incorrect password. Try again.'; return; }
+  // Save session
+  localStorage.setItem(SESSION_KEY, user);
+  // Load that user's state into S
+  Object.assign(S, acc.data || {});
+  S.name = acc.name; S.cls = acc.cls;
+  saveState();
+  $('scr-onboard').classList.remove('on');
+  launchApp();
+}
+
+function doSignup() {
+  const name  = $('su-name').value.trim();
+  const user  = $('su-user').value.trim().toLowerCase().replace(/\s+/g,'');
+  const cls   = $('su-cls').value;
+  const pass  = $('su-pass').value;
+  const pass2 = $('su-pass2').value;
+  $('su-err').textContent = '';
+  if (!name)         { $('su-err').textContent = 'Please enter your name.'; return; }
+  if (!user)         { $('su-err').textContent = 'Please choose a username.'; return; }
+  if (!/^[a-z0-9_]+$/.test(user)) { $('su-err').textContent = 'Username: letters, numbers and _ only.'; return; }
+  if (!cls)          { $('su-err').textContent = 'Please select your class.'; return; }
+  if (pass.length < 6) { $('su-err').textContent = 'Password must be at least 6 characters.'; return; }
+  if (pass !== pass2){ $('su-err').textContent = 'Passwords do not match.'; return; }
+  const accs = loadAccounts();
+  if (accs[user])    { $('su-err').textContent = 'Username already taken. Choose another.'; return; }
+  // Create account
+  const newState = { ...DEFAULT_STATE, name, cls, mood: S.mood || '' };
+  accs[user] = { name, cls, passwordHash: simpleHash(pass), data: newState };
+  saveAccounts(accs);
+  localStorage.setItem(SESSION_KEY, user);
+  Object.assign(S, newState);
+  saveState();
+  $('scr-onboard').classList.remove('on');
+  launchApp();
+}
+
+// Mood selection on signup form
+document.querySelectorAll('.obmood').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.obmood').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    S.mood = b.dataset.v;
+  });
+});
+
+// Allow Enter key on login
+$('li-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+$('li-user').addEventListener('keydown', e => { if (e.key === 'Enter') $('li-pass').focus(); });
+
+// Check for existing session
+const _session = localStorage.getItem(SESSION_KEY);
+if (_session) {
+  const _accs = loadAccounts();
+  if (_accs[_session]) {
+    Object.assign(S, _accs[_session].data || {});
+    S.name = _accs[_session].name;
+    S.cls  = _accs[_session].cls;
+    $('scr-onboard').classList.remove('on');
+    launchApp();
+  }
+}
+
+
+
+
+function launchApp() {
+  $('bnav').style.display = 'flex';
+  buildSubjStrip();
+  updateTopbarMeta();
+  goTo('home');
+}
+
+function updateTopbarMeta() {
+  $('ava-home').textContent = S.name.charAt(0).toUpperCase();
+  $('bar-cls-sub').textContent = S.cls;
+  // Apply saved font size
+  if (S.fontSize) document.body.style.fontSize = S.fontSize + 'px';
+}
+
+/* ─── PROFILE MENU ────────────────────────────────────────── */
+function toggleProfileMenu() {
+  const ov = $('profile-overlay');
+  if (ov.classList.contains('open')) { closeProfileMenu(); return; }
+  // Update menu values
+  $('pm-name').textContent = S.name;
+  $('pm-cls').textContent  = S.cls + (S.mood ? ' · ' + S.mood : '');
+  $('pm-mood-val').textContent = S.mood ? S.mood.split(' ')[0] : '—';
+  const dark = document.documentElement.hasAttribute('data-dark');
+  $('pm-theme-icon').textContent = dark ? '🌙' : '☀️';
+  $('pm-theme-val').textContent  = dark ? 'Dark' : 'Light';
+  $('pm-notif-val').textContent  = S.notifPref ? 'On' : 'Off';
+  const range = $('txt-size-range');
+  if (range) range.value = S.fontSize || 14;
+  ov.classList.add('open');
+}
+function closeProfileMenu() { $('profile-overlay').classList.remove('open'); }
+
+function changeFontSize(val) {
+  S.fontSize = parseInt(val);
+  document.body.style.fontSize = S.fontSize + 'px';
+  save();
+}
+
+function toggleThemeFromMenu() {
+  const html = document.documentElement;
+  const isDark = html.hasAttribute('data-dark');
+  if (isDark) html.removeAttribute('data-dark');
+  else html.setAttribute('data-dark', '');
+  S.dark = !isDark; save();
+  $('pm-theme-icon').textContent = !isDark ? '🌙' : '☀️';
+  $('pm-theme-val').textContent  = !isDark ? 'Dark' : 'Light';
+  document.querySelectorAll('[data-th]').forEach(b => b.textContent = !isDark ? '☾' : '☀');
+}
+
+function toggleNotifPref() {
+  S.notifPref = !S.notifPref; save();
+  $('pm-notif-val').textContent = S.notifPref ? 'On' : 'Off';
+}
+
+function openMoodSheet() {
+  closeProfileMenu();
+  // Mark current mood
+  document.querySelectorAll('#mood-sheet-moods .obmood').forEach(b => {
+    b.classList.toggle('on', b.dataset.v === S.mood);
+  });
+  $('mood-sheet').classList.add('open');
+}
+function pickMood(btn) {
+  document.querySelectorAll('#mood-sheet-moods .obmood').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  S.mood = btn.dataset.v;
+  save();
+  $('pm-mood-val') && ($('pm-mood-val').textContent = S.mood.split(' ')[0]);
+  closeSheet('mood-sheet');
+  renderHome();
+}
+
+function confirmLogout() {
+  closeProfileMenu();
+  if (confirm('Log out of your account?')) {
+    // Stop any queued saves from re-writing session data
+    _loggingOut = true;
+    clearTimeout(saveTimer);
+    // Clear session
+    localStorage.removeItem(SESSION_KEY);
+    // Hide app UI
+    $('bnav').style.display = 'none';
+    document.querySelectorAll('.scr').forEach(s => s.classList.remove('on'));
+    // Reset login fields and show auth screen
+    $('li-user').value = '';
+    $('li-pass').value = '';
+    $('li-err').textContent = '';
+    showAuthTab('login');
+    $('scr-onboard').classList.add('on');
+    // Re-enable saving for next login
+    _loggingOut = false;
+  }
+}
+
+
+/* ─── NAVIGATION ──────────────────────────────────────────── */
+function goTo(tab) {
+  document.querySelectorAll('.scr').forEach(s => s.classList.remove('on'));
+  const el = $('scr-' + tab);
+  if (el) el.classList.add('on');
+  document.querySelectorAll('.nitem').forEach(b => b.classList.toggle('on', b.dataset.t === tab));
+  if (tab === 'home')      renderHome();
+  if (tab === 'schedule')  renderTasks();
+  if (tab === 'notes')     renderNotes();
+  if (tab === 'flash')     renderCards();
+  if (tab === 'analytics') renderAnalytics();
+}
+
+/* ─── SHEETS ──────────────────────────────────────────────── */
+function openSheet(id) {
+  if (id === 'task-sheet') $('ts-due').value = today();
+  $(id).classList.add('open');
+}
+function closeSheet(id) { $(id).classList.remove('open'); }
+
+/* ─── HOME ────────────────────────────────────────────────── */
+function renderHome() {
+  const pending = S.tasks.filter(t => !t.done).length;
+  const done    = S.tasks.filter(t => t.done).length;
+  const avg     = S.history.length ? Math.round(S.history.reduce((a, h) => a + h.score, 0) / S.history.length) : null;
+  const h = new Date().getHours();
+  const gr = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+
+  $('dash-name').textContent = `${gr}, ${S.name} ${S.mood ? S.mood.split(' ')[0] : ''}`.trim();
+  $('dash-sub').textContent  = `${pending} task${pending !== 1 ? 's' : ''} pending · ${S.cards.filter(c => c.mastery < 2).length} cards to review`;
+  $('k-pend').textContent    = pending;
+  $('k-done').textContent    = done;
+  $('k-notes').textContent   = S.notes.length;
+  $('k-score').textContent   = avg !== null ? avg + '%' : '—';
+
+  const upcoming = S.tasks.filter(t => !t.done).slice(0, 4);
+  $('dash-tasks').innerHTML  = upcoming.length
+    ? upcoming.map(t => taskRow(t, true)).join('')
+    : '<div class="empty" style="padding:12px 0">No pending tasks. Add one!</div>';
+  renderGoals();
+}
+
+function taskRow(t, compact) {
+  const dc = { high: 'var(--red)', medium: 'var(--amber)', low: 'var(--green)' };
+  return `<div class="titem">
+    <button class="tchk ${t.done ? 'dn' : ''}" onclick="toggleTask('${t.id}')"></button>
+    <div class="tbody">
+      <div class="ttxt ${t.done ? 'dn' : ''}">${esc(t.title)}</div>
+      <div class="tmeta">${esc(t.subject)}${t.due ? ' · ' + fmtDate(t.due) : ''}</div>
+      ${!compact ? `<div class="tmeta" style="color:${dc[t.priority]};margin-top:2px">${t.priority.toUpperCase()}</div>` : ''}
+    </div>
+    <div class="pdot" style="background:${dc[t.priority]}"></div>
+    ${!compact ? `<button onclick="delTask('${t.id}')" style="font-size:18px;color:var(--t3);padding:0 4px;line-height:1">×</button>` : ''}
+  </div>`;
+}
+
+function toggleTask(id) {
+  const t = S.tasks.find(x => x.id === id);
+  if (t) { t.done = !t.done; save(); }
+  renderTasks(); renderHome();
+}
+function delTask(id) {
+  S.tasks = S.tasks.filter(t => t.id !== id);
+  save(); renderTasks(); renderHome();
+}
+
+/* ─── GOALS ───────────────────────────────────────────────── */
+const CAT_COLORS = { academic:'#1d4ed8', health:'#166534', personal:'#92400e', habit:'#6d28d9' };
+const CAT_EMOJI  = { academic:'📚', health:'🏃', personal:'🌟', habit:'🔁' };
+let goalFilter = 'all';
+
+function renderGoals() {
+  const list = goalFilter === 'all' ? S.goals : S.goals.filter(g => g.cat === goalFilter);
+  const total = S.goals.length, done = S.goals.filter(g => g.done).length;
+  const countEl = $('goal-count');
+  if (countEl) countEl.textContent = `${done}/${total} done`;
+
+  $('goals-list').innerHTML = list.length
+    ? list.map(g => `<div class="gitem">
+        <button class="gchk ${g.done ? 'dn' : ''}" onclick="toggleGoal('${g.id}')">${g.done ? '✓' : ''}</button>
+        <div class="gcat-dot" style="background:${CAT_COLORS[g.cat]||'var(--t3)'}"></div>
+        <div class="gtxt${g.done ? ' dn' : ''}">${esc(g.text)}</div>
+        <span style="font-size:12px;color:var(--t3)">${CAT_EMOJI[g.cat]||''}</span>
+        <button class="gdel" onclick="delGoal('${g.id}')">×</button>
+      </div>`).join('')
+    : `<div class="empty" style="padding:12px 0">${goalFilter==='all'?'No goals yet. Add one below.':'No '+goalFilter+' goals yet.'}</div>`;
+}
+
+function filterGoals(cat, btn) {
+  goalFilter = cat;
+  document.querySelectorAll('#goal-cat-filter .goal-cat-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  renderGoals();
+}
+
+function toggleGoal(id) {
+  const g = S.goals.find(x => x.id === id);
+  if (g) { g.done = !g.done; save(); }
+  renderGoals();
+}
+function delGoal(id) { S.goals = S.goals.filter(x => x.id !== id); save(); renderGoals(); }
+function addGoal() {
+  const v = $('goal-inp').value.trim();
+  if (!v) return;
+  const cat = $('goal-cat-sel') ? $('goal-cat-sel').value : 'academic';
+  S.goals.push({ id: uid(), text: v, done: false, cat });
+  $('goal-inp').value = '';
+  save(); renderGoals();
+}
+
+/* ─── TASKS ───────────────────────────────────────────────── */
+function renderTasks() {
+  const f = S.taskFilter;
+  const list = S.tasks.filter(t =>
+    f === 'all' ? true : f === 'pending' ? !t.done : f === 'done' ? t.done : t.priority === f
+  );
+  $('task-list').innerHTML = list.length
+    ? list.map(t => taskRow(t, false)).join('')
+    : '<div class="empty" style="padding:12px 0">No tasks here yet.</div>';
+}
+function filterTasks(f, btn) {
+  S.taskFilter = f;
+  document.querySelectorAll('#task-filter-pills .pill').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  renderTasks();
+}
+function addTask() {
+  const title = $('ts-title').value.trim();
+  if (!title) { $('ts-title').focus(); return; }
+  S.tasks.push({ id: uid(), title, subject: $('ts-sub').value, due: $('ts-due').value, priority: $('ts-pri').value, done: false });
+  $('ts-title').value = '';
+  save(); closeSheet('task-sheet'); renderTasks(); renderHome();
+}
+
+/* ─── AI TUTOR ────────────────────────────────────────────── */
+const SUBJECTS = ['Mathematics','Physics','Chemistry','Biology','History','Geography','English','Computer Science','Economics','Hindi','Sanskrit'];
+
+function buildSubjStrip() {
+  $('subj-strip').innerHTML = SUBJECTS.map(s =>
+    `<button class="pill ${s === S.chatSub ? 'on' : ''}" onclick="setSub('${s}',this)">${s}</button>`
+  ).join('');
+}
+function setSub(s, btn) {
+  S.chatSub = s;
+  $('subj-label').textContent = s;
+  document.querySelectorAll('#subj-strip .pill').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  save();
+}
+function useSugg(b) { $('chat-in').value = b.textContent; sendChat(); }
+function clearChat() {
+  S.chat = []; save();
+  const box = $('chatbox');
+  box.innerHTML = `<div class="cempty" id="chat-empty">
+    <div class="ceico">✦</div>
+    <div class="cetxt">Ask CortexAI anything about your studies</div>
+    <div class="cesuggest">
+      <button class="csg" onclick="useSugg(this)">Explain quadratic formula</button>
+      <button class="csg" onclick="useSugg(this)">What is photosynthesis?</button>
+      <button class="csg" onclick="useSugg(this)">Newton's laws of motion</button>
+      <button class="csg" onclick="useSugg(this)">Tips for board exams</button>
+    </div>
+  </div>`;
+}
+
+async function sendChat() {
+  const inp = $('chat-in');
+  const msg = inp.value.trim();
+  const btn = $('send-btn');
+  if (!msg || btn.disabled) return;
+  inp.value = ''; inp.style.height = 'auto';
+  btn.disabled = true;
+  S.chat.push({ role: 'user', content: msg }); save();
+
+  const empty = $('chat-empty');
+  if (empty) empty.style.display = 'none';
+  const box = $('chatbox');
+
+  const uDiv = document.createElement('div');
+  uDiv.className = 'mwrap user';
+  uDiv.innerHTML = `<div class="mwho">${esc(S.name)}</div><div class="bbl user"><pre>${esc(msg)}</pre></div>`;
+  box.appendChild(uDiv);
+
+  const bDiv = document.createElement('div');
+  bDiv.className = 'mwrap bot';
+  bDiv.innerHTML = `<div class="mwho">CortexAI</div><div class="bbl bot" id="stream-bub"><span class="loading">Thinking…</span></div>`;
+  box.appendChild(bDiv);
+  box.scrollTop = box.scrollHeight;
+
+  let full = '';
+  await callAI(
+    `You are CortexAI, an expert and encouraging study tutor for ${S.name}, a ${S.cls} student. Subject focus: ${S.chatSub}. Explain clearly and step by step. Be concise and supportive.`,
+    msg,
+    chunk => {
+      full = chunk;
+      const b = $('stream-bub');
+      if (b) { b.innerHTML = `<pre>${esc(chunk)}</pre><span class="scursor"></span>`; }
+      box.scrollTop = box.scrollHeight;
+    }
+  );
+
+  S.chat.push({ role: 'assistant', content: full }); save();
+  const b = $('stream-bub');
+  if (b) b.innerHTML = `<pre>${esc(full)}</pre>`;
+  btn.disabled = false;
+  box.scrollTop = box.scrollHeight;
+}
+
+/* ─── PRACTICE ────────────────────────────────────────────── */
+let pracQs = [], pracAns = {}, pracSubmitted = false, examTimer = null, examLeft = 0;
+
+async function genQ() {
+  const topic = $('p-topic').value.trim();
+  if (!topic) { $('p-topic').focus(); return; }
+  const btn = $('gen-btn');
+  btn.textContent = 'Generating…'; btn.disabled = true;
+  pracQs = []; pracAns = {}; pracSubmitted = false;
+  $('q-area').innerHTML = '<div class="loading" style="padding:20px">Generating questions…</div>';
+  $('submit-wrap').style.display = 'none';
+  $('exam-banner').classList.remove('show');
+  stopExamTimer();
+
+  const sub  = $('p-sub').value;
+  const type = $('p-type').value;
+  const diff = $('p-diff').value;
+  const cnt  = $('p-cnt').value;
+
+  let raw = '';
+  await callAI(
+    'Return ONLY a valid JSON array. No markdown, no explanation. MCQ format: [{"q":"...","options":["A: text","B: text","C: text","D: text"],"answer":"A","explanation":"..."}]. Short answer: [{"q":"...","answer":"...","explanation":"..."}]',
+    `Generate ${cnt} ${type === 'mcq' ? 'MCQ' : 'short answer'} questions on "${topic}" for ${sub}, ${S.cls} level, difficulty: ${diff}.`,
+    c => { raw = c; }
+  );
+
+  btn.textContent = 'Generate Questions'; btn.disabled = false;
+
+  try {
+    const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim());
+    pracQs = Array.isArray(parsed) ? parsed : [];
+    if (!pracQs.length) throw new Error();
+  } catch (_) {
+    pracQs = [{ q: 'Could not generate questions. Please try a more specific topic.', options: [], answer: '', explanation: '' }];
+  }
+
+  if ($('p-exam').checked && pracQs.length) {
+    examLeft = pracQs.length * 90;
+    $('exam-banner').classList.add('show');
+    startExamTimer();
+  }
+  renderQ();
+}
+
+function renderQ() {
+  $('q-area').innerHTML = pracQs.map((q, i) => {
+    const optHtml = q.options && q.options.length
+      ? q.options.map((o, j) => {
+          const lbl = ['A','B','C','D'][j];
+          const sel = pracAns[i] === lbl;
+          const cor = pracSubmitted && lbl === q.answer;
+          const wrg = pracSubmitted && sel && lbl !== q.answer;
+          const cls = cor ? 'opt cor' : wrg ? 'opt wrg' : sel ? 'opt sel' : 'opt';
+          return `<button class="${cls}" onclick="pickOpt(${i},'${lbl}')" ${pracSubmitted ? 'disabled' : ''}>
+            <span class="olbl">${lbl}</span>
+            <span>${esc(o.replace(/^[A-D]:\s*/, ''))}</span>
+            ${cor ? '<span style="margin-left:auto">✓</span>' : ''}${wrg ? '<span style="margin-left:auto">✗</span>' : ''}
+          </button>`;
+        }).join('')
+      : '';
+    const expl = pracSubmitted && q.explanation ? `<div class="expl">💡 ${esc(q.explanation)}</div>` : '';
+    return `<div class="qcard">
+      <div class="qnum">QUESTION ${i + 1} OF ${pracQs.length}</div>
+      <div class="qtxt">${esc(q.q)}</div>
+      ${optHtml}${expl}
+    </div>`;
+  }).join('');
+
+  $('submit-wrap').style.display = pracQs.length && !pracSubmitted ? 'block' : 'none';
+
+  if (pracSubmitted) {
+    const got = pracQs.reduce((a, q, i) => a + (pracAns[i] === q.answer ? 1 : 0), 0);
+    const p   = pct(got, pracQs.length);
+    const pass = p >= 60;
+    const scoreHtml = `<div class="scorecard ${pass ? 'pass' : 'fail'}">
+      <div class="scoren" style="color:${pass ? 'var(--green)' : 'var(--red)'}">${got}<span style="font-size:22px;color:var(--t3)">/${pracQs.length}</span></div>
+      <div class="scorel">${p}% · ${pracQs.length} questions</div>
+      <div class="scorem">${pass ? '🎉 Excellent work!' : '📚 Keep practicing!'}</div>
+      <button onclick="resetPrac()" class="btng" style="margin-top:14px">Try Again</button>
+    </div>`;
+    $('q-area').innerHTML = scoreHtml + $('q-area').innerHTML;
+    S.history.unshift({ id: uid(), topic: $('p-topic').value, subject: $('p-sub').value, score: p, got, total: pracQs.length, date: today() });
+    save();
+    stopExamTimer();
+    $('exam-banner').classList.remove('show');
+  }
+}
+
+function pickOpt(i, lbl) { if (pracSubmitted) return; pracAns[i] = lbl; renderQ(); }
+function submitPrac()    { pracSubmitted = true; stopExamTimer(); renderQ(); }
+function resetPrac()     { pracSubmitted = false; pracQs = []; pracAns = {}; $('q-area').innerHTML = ''; $('submit-wrap').style.display = 'none'; $('exam-banner').classList.remove('show'); }
+function startExamTimer() {
+  examTimer = setInterval(() => {
+    examLeft--;
+    const m = Math.floor(examLeft / 60), s = String(examLeft % 60).padStart(2, '0');
+    $('exam-timer').textContent = `${m}:${s}`;
+    if (examLeft <= 0) { stopExamTimer(); submitPrac(); }
+  }, 1000);
+}
+function stopExamTimer() { if (examTimer) { clearInterval(examTimer); examTimer = null; } }
+
+/* ─── NOTES ───────────────────────────────────────────────── */
+function renderNotes() {
+  const q = ($('note-search').value || '').toLowerCase();
+  const list = S.notes.filter(n =>
+    !q || n.title.toLowerCase().includes(q) ||
+    n.subject.toLowerCase().includes(q) ||
+    (n.tags || []).some(t => t.toLowerCase().includes(q))
+  );
+  $('note-grid').innerHTML = list.length
+    ? list.map(n => `<div class="notecard" style="--nc:${n.color}" onclick="openNote('${n.id}')">
+        <div class="nctitle">${esc(n.title)}</div>
+        <div class="ncmeta">${esc(n.subject)} · ${n.date}</div>
+        ${(n.tags||[]).length ? `<div class="nctags">${n.tags.map(t => `<span class="ntag">#${esc(t)}</span>`).join('')}</div>` : ''}
+      </div>`).join('')
+    : '<div class="empty">No notes yet. Tap + to add one.</div>';
+}
+
+function openNote(id) {
+  const n = S.notes.find(x => x.id === id);
+  if (!n) return;
+  S.curNote = id;
+  $('nv-subj').textContent    = n.subject.toUpperCase();
+  $('nv-title').textContent   = n.title;
+  $('nv-meta').textContent    = n.subject + ' · ' + n.date;
+  $('nv-tags').innerHTML      = (n.tags||[]).map(t => `<span class="ntag">#${esc(t)}</span>`).join('');
+  $('nv-content').textContent = n.content;
+  $('nv-ai').style.display    = 'none';
+  $('nv-ai-text').textContent = '';
+  $('note-view').classList.add('open');
+}
+function closeNoteView() { $('note-view').classList.remove('open'); }
+function delNote() {
+  S.notes = S.notes.filter(n => n.id !== S.curNote);
+  save(); closeNoteView(); renderNotes();
+}
+
+async function aiNoteSum() {
+  const n = S.notes.find(x => x.id === S.curNote);
+  if (!n) return;
+  $('nv-ai').style.display    = 'block';
+  $('nv-ai-text').textContent = 'Summarizing…';
+  await callAI(
+    `You are CortexAI. Summarize these study notes concisely for a ${S.cls} student. Use bullet points. Highlight key facts and any formulas.`,
+    `Summarize: "${n.title}" (${n.subject})\n\n${n.content}`,
+    c => { $('nv-ai-text').textContent = c; }
+  );
+}
+
+function pickCol(el) {
+  document.querySelectorAll('#colrow .col').forEach(d => d.classList.remove('on'));
+  el.classList.add('on');
+  S.noteColor = el.dataset.c;
+}
+function saveNote() {
+  const title = $('ns-title').value.trim();
+  if (!title) { $('ns-title').focus(); return; }
+  const note = {
+    id: uid(), title,
+    subject:  $('ns-sub').value,
+    content:  $('ns-body').value,
+    tags:     $('ns-tags').value.split(',').map(t => t.trim()).filter(Boolean),
+    color:    S.noteColor,
+    date:     today()
+  };
+  S.notes.unshift(note);
+  $('ns-title').value = ''; $('ns-body').value = ''; $('ns-tags').value = '';
+  S.noteColor = '#78716c';
+  document.querySelectorAll('#colrow .col').forEach(d => d.classList.toggle('on', d.dataset.c === '#78716c'));
+  save(); closeSheet('note-sheet'); renderNotes();
+}
+
+/* ─── FLASHCARDS ──────────────────────────────────────────── */
+function renderCards() {
+  const allSubjs = ['all', ...new Set(S.cards.map(c => c.subject))];
+  $('card-filter-row').innerHTML = allSubjs.map(s =>
+    `<button class="pill ${S.cardFilter === s ? 'on' : ''}" onclick="setCardF('${s}',this)">${s === 'all' ? `All (${S.cards.length})` : s}</button>`
+  ).join('');
+
+  const list = S.cardFilter === 'all' ? S.cards : S.cards.filter(c => c.subject === S.cardFilter);
+
+  if (!list.length) {
+    $('fc-front').textContent = S.cards.length ? 'No cards in this filter.' : 'Add your first flashcard →';
+    $('fc-back').textContent  = '';
+    $('fc-ctr').textContent   = '0 / 0';
+    $('fc-prog').innerHTML    = '';
+    document.querySelectorAll('.mastbtn').forEach(b => b.classList.remove('on'));
+    $('mast-stats').innerHTML = '<div class="empty" style="padding:8px 0">No cards yet.</div>';
+    return;
+  }
+
+  const idx  = Math.min(S.cardIdx, list.length - 1);
+  S.cardIdx  = idx;
+  const card = list[idx];
+
+  $('fc-front').textContent = card.front;
+  $('fc-back').textContent  = card.back;
+  $('fc-ctr').textContent   = `${idx + 1} / ${list.length} · ${card.subject}`;
+  $('fc-inner').classList.remove('flip');
+
+  $('fc-prog').innerHTML = list.map((_, i) =>
+    `<div class="fcp ${i < idx ? 'dn' : i === idx ? 'cur' : ''}"></div>`
+  ).join('');
+
+  document.querySelectorAll('.mastbtn').forEach((b, i) => b.classList.toggle('on', card.mastery === i));
+
+  const cols = ['var(--red)', 'var(--amber)', 'var(--green)'];
+  $('mast-stats').innerHTML = ['Not yet', 'Getting there', 'Mastered'].map((l, i) => {
+    const n = S.cards.filter(c => c.mastery === i).length;
+    return `<div class="barrow">
+      <div class="barlbl">${l}</div>
+      <div class="bartrack"><div class="barfill" style="width:${pct(n, S.cards.length)}%;background:${cols[i]}"></div></div>
+      <div class="barval" style="color:${cols[i]}">${n}</div>
+    </div>`;
+  }).join('');
+}
+
+function setCardF(f, _btn) { S.cardFilter = f; S.cardIdx = 0; save(); renderCards(); }
+function flipCard()  { $('fc-inner').classList.toggle('flip'); }
+function prevCard()  { const l = S.cardFilter === 'all' ? S.cards : S.cards.filter(c => c.subject === S.cardFilter); S.cardIdx = (S.cardIdx - 1 + l.length) % l.length; renderCards(); }
+function nextCard()  { const l = S.cardFilter === 'all' ? S.cards : S.cards.filter(c => c.subject === S.cardFilter); S.cardIdx = (S.cardIdx + 1) % l.length; renderCards(); }
+function setMast(v)  {
+  const list = S.cardFilter === 'all' ? S.cards : S.cards.filter(c => c.subject === S.cardFilter);
+  const card = list[S.cardIdx];
+  if (card) { const c = S.cards.find(x => x.id === card.id); if (c) c.mastery = v; }
+  save(); renderCards();
+}
+function addCard() {
+  const front = $('cf-front').value.trim(), back = $('cf-back').value.trim();
+  if (!front || !back) return;
+  S.cards.push({ id: uid(), front, back, subject: $('cf-sub').value, mastery: 0 });
+  $('cf-front').value = ''; $('cf-back').value = '';
+  save(); closeSheet('card-sheet'); renderCards();
+}
+
+/* ─── AI TOOLS ────────────────────────────────────────────── */
+const TOOL_PROMPTS = {
+  summary:   'Summarize for a {{cls}} student. Use clear bullet points.',
+  keypoints: 'Extract the most important key points. Number each one.',
+  explain:   'Explain this in the simplest possible way for a {{cls}} student. Use analogies and examples.',
+  quiz:      'Create 5 quick revision questions with answers for a {{cls}} student.',
+  mindmap:   'Create a structured text mind map for a {{cls}} student. Use indentation and hierarchy.',
+  mnemonic:  'Create clever, fun mnemonics and memory tricks to help remember this content.',
+  vocab:     'For this word: give definition, pronunciation, part of speech, 3 example sentences, synonyms, antonyms, and a memory tip.',
+};
+const TOOL_LABELS = {
+  summary:   'PASTE TEXT OR TOPIC TO SUMMARIZE',
+  keypoints: 'PASTE TEXT TO EXTRACT KEY POINTS',
+  explain:   'ENTER CONCEPT OR TOPIC',
+  quiz:      'PASTE CONTENT FOR QUIZ',
+  mindmap:   'ENTER TOPIC FOR MIND MAP',
+  mnemonic:  'ENTER CONTENT FOR MNEMONICS',
+  vocab:     'ENTER A WORD',
+};
+
+function setTool(t, btn) {
+  S.curTool = t; save();
+  document.querySelectorAll('#tool-tabs .pill').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  $('tool-inp-lbl').textContent = TOOL_LABELS[t] || 'INPUT';
+  $('tool-out').innerHTML = '<div class="empty" style="padding:16px 0">Output will appear here.</div>';
+  $('copy-btn').style.display = 'none';
+}
+
+async function runTool() {
+  const inp = $('tool-inp').value.trim();
+  if (!inp) { $('tool-inp').focus(); return; }
+  const btn = $('tool-run-btn');
+  btn.textContent = 'Running…'; btn.disabled = true;
+  $('tool-out').innerHTML = '<div class="loading" style="padding:16px 0">Processing…</div>';
+  const sys = (TOOL_PROMPTS[S.curTool] || TOOL_PROMPTS.summary).replace(/{{cls}}/g, S.cls);
+  await callAI(
+    `You are CortexAI, an educational assistant for ${S.cls} students. ${sys}`,
+    inp,
+    c => { $('tool-out').innerHTML = `<pre>${esc(c)}<span class="scursor"></span></pre>`; }
+  );
+  btn.textContent = 'Run Tool'; btn.disabled = false;
+  $('copy-btn').style.display = 'block';
+}
+
+function copyOut() {
+  const text = $('tool-out').textContent;
+  if (navigator.clipboard) navigator.clipboard.writeText(text);
+  $('copy-btn').textContent = '✓ Copied!';
+  setTimeout(() => $('copy-btn').textContent = '📋 Copy Output', 2000);
+}
+
+/* ─── POMODORO ────────────────────────────────────────────── */
+let pomoRun = false, pomoSess = 'focus', pomoLeft = 25 * 60, pomoCount = 0, pomoTimer = null;
+const PCIRC = 2 * Math.PI * 64;
+
+function updatePomoUI() {
+  const m = Math.floor(pomoLeft / 60), s = String(pomoLeft % 60).padStart(2, '0');
+  $('pomo-disp').textContent = `${m}:${s}`;
+  $('pomo-sess').textContent = pomoSess === 'focus' ? 'FOCUS' : 'BREAK';
+  $('pomo-cnt').textContent  = `${pomoCount} session${pomoCount !== 1 ? 's' : ''} completed`;
+  $('pomo-btn').textContent  = pomoRun ? 'Pause' : 'Start';
+  const total  = (pomoSess === 'focus' ? parseInt($('p-focus').value) : parseInt($('p-break').value)) * 60 || 1;
+  const offset = PCIRC - (pomoLeft / total) * PCIRC;
+  $('pomo-ring').style.strokeDashoffset = Math.max(0, offset);
+}
+
+function togglePomo() {
+  pomoRun = !pomoRun;
+  if (pomoRun) {
+    pomoTimer = setInterval(() => {
+      pomoLeft--;
+      if (pomoLeft <= 0) {
+        clearInterval(pomoTimer); pomoTimer = null; pomoRun = false;
+        if (pomoSess === 'focus') {
+          pomoCount++;
+          pomoSess = 'break';
+          pomoLeft = (parseInt($('p-break').value) || 5) * 60;
+        } else {
+          pomoSess = 'focus';
+          pomoLeft = (parseInt($('p-focus').value) || 25) * 60;
+        }
+      }
+      updatePomoUI();
+    }, 1000);
+  } else {
+    clearInterval(pomoTimer); pomoTimer = null;
+  }
+  updatePomoUI();
+}
+
+function resetPomo() {
+  pomoRun = false; clearInterval(pomoTimer); pomoTimer = null;
+  pomoSess = 'focus';
+  pomoLeft = (parseInt($('p-focus').value) || 25) * 60;
+  updatePomoUI();
+}
+updatePomoUI();
+
+/* ─── AI SCHEDULE ─────────────────────────────────────────── */
+async function genSchedule() {
+  const btn = $('sched-btn');
+  btn.textContent = 'Generating…'; btn.disabled = true;
+  $('sched-out').innerHTML = '<div class="loading" style="padding:16px 0">Building your schedule…</div>';
+  const pending = S.tasks.filter(t => !t.done).map(t => ({ title: t.title, subject: t.subject, due: t.due, priority: t.priority }));
+  await callAI(
+    'You are CortexAI, a smart study planner. Create a motivating, realistic 7-day study schedule. Use clear day headings, time blocks, and helpful emojis.',
+    `Create a 7-day study schedule for ${S.name} (${S.cls}). Pending tasks: ${JSON.stringify(pending)}. Include time blocks, subject rotation, breaks. Today: ${today()}.`,
+    c => { $('sched-out').innerHTML = `<pre style="font-size:12px;line-height:1.9;color:var(--t2)">${esc(c)}</pre>`; }
+  );
+  btn.textContent = '✦ Regenerate'; btn.disabled = false;
+}
+
+/* ─── ANALYTICS ───────────────────────────────────────────── */
+function renderAnalytics() {
+  const done     = S.tasks.filter(t => t.done).length;
+  const avg      = S.history.length ? Math.round(S.history.reduce((a, h) => a + h.score, 0) / S.history.length) : null;
+  const mastered = S.cards.filter(c => c.mastery === 2).length;
+
+  $('an-t').textContent = S.tasks.length;
+  $('an-d').textContent = done;
+  $('an-s').textContent = avg !== null ? avg + '%' : '—';
+  $('an-m').textContent = `${mastered}/${S.cards.length}`;
+
+  function barHTML(lbl, w, val, col) {
+    return `<div class="barrow">
+      <div class="barlbl" title="${esc(lbl)}">${esc(lbl)}</div>
+      <div class="bartrack"><div class="barfill" style="width:${w}%;background:${col}"></div></div>
+      <div class="barval">${val}</div>
+    </div>`;
+  }
+
+  const subjs = [...new Set(S.tasks.map(t => t.subject))];
+  $('an-subj').innerHTML = subjs.length
+    ? subjs.map(s => { const tot = S.tasks.filter(t => t.subject === s).length; const d = S.tasks.filter(t => t.subject === s && t.done).length; return barHTML(s, pct(d, tot), `${d}/${tot}`, 'var(--t1)'); }).join('')
+    : '<div class="empty" style="padding:8px 0">No tasks yet.</div>';
+
+  $('an-scores').innerHTML = S.history.length
+    ? S.history.slice(0, 8).map(h => { const col = h.score >= 70 ? 'var(--green)' : h.score >= 50 ? 'var(--amber)' : 'var(--red)'; return barHTML(h.topic, h.score, h.score + '%', col); }).join('')
+    : '<div class="empty" style="padding:8px 0">No tests yet.</div>';
+
+  const msubjs = [...new Set(S.cards.map(c => c.subject))];
+  $('an-mast').innerHTML = msubjs.length
+    ? msubjs.map(s => { const sc = S.cards.filter(c => c.subject === s); const m = sc.filter(c => c.mastery === 2).length; return barHTML(s, pct(m, sc.length), `${m}/${sc.length}`, 'var(--green)'); }).join('')
+    : '<div class="empty" style="padding:8px 0">No flashcards yet.</div>';
+}
+
+/* ─── CLAUDE API ──────────────────────────────────────────── */
+async function callAI(system, user, onChunk) {
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1024,
+        stream: true,
+        system,
+        messages: [{ role: 'user', content: user }]
+      })
+    });
+    if (!res.ok) { onChunk(`[API Error ${res.status}. Please try again.]`); return; }
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let full = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      for (const line of dec.decode(value, { stream: true }).split('\n')) {
+        if (!line.startsWith('data: ')) continue;
+        const data = line.slice(6).trim();
+        if (data === '[DONE]') continue;
+        try {
+          const obj = JSON.parse(data);
+          if (obj.type === 'content_block_delta' && obj.delta?.text) {
+            full += obj.delta.text;
+            onChunk(full);
+          }
+        } catch (_) {}
+      }
+    }
+    return full;
+  } catch (e) {
+    onChunk('[Network error. Check your connection and try again.]');
+  }
+}
+</script>
+</body>
+</html>
